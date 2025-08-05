@@ -6,7 +6,7 @@
 
 ---
 
-## 🔧 Tech Stack 
+## 🔧 Tech Stack
 
 - **Frontend**: React.js, React Router, Redux, Axios  
 - **Backend**: Node.js, Express.js  
