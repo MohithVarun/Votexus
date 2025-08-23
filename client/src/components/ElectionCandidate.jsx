@@ -5,7 +5,7 @@ import { useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 
 
-const ElectionCandidate = ({fullName,image,motto,_id:id}) => {
+const ElectionCandidate = ({fullName,image,motto,_id:id,isAdmin}) => {
   const token = useSelector(state => state?.vote?.currentVoter?.token)
   const navigate=useNavigate()
   const deleteCandidate = async () =>{
@@ -24,12 +24,10 @@ const ElectionCandidate = ({fullName,image,motto,_id:id}) => {
         <div>
             <h5>{fullName}</h5>
             <small>{motto?.length > 70 ? motto.substring(0,70) + "..." : motto}</small>
-            <button className="electionCandidate__btn" onClick={deleteCandidate}><IoMdTrash/></button>
+            {isAdmin && <button className="electionCandidate__btn" onClick={deleteCandidate}><IoMdTrash/></button>}
         </div>
     </li>
   )
 }
 
 export default ElectionCandidate
-
-

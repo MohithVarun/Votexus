@@ -26,4 +26,3 @@ const Congrats = () => {
 }
 
 export default Congrats
-

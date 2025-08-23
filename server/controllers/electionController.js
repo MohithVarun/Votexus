@@ -1,6 +1,8 @@
-const cloudinary = require('../utils/cloudinary')
+const {v4:uuid}=require("uuid")
+const cloudinary=require('../utils/cloudinary')
+const path=require("path")
 
-const HttpError = require('../models/ErrorModel')
+const HttpError=require('../models/ErrorModel')
 const ElectionModal = require('../models/electionModel')
 const CandidateModel = require('../models/candidateModel')
 
@@ -24,34 +26,29 @@ const addElection = async(req,res,next)=>{
         }
 
         const {club}=req.files;
-        // Increase size limit to 2mb and optimize image upload
-        if(club.size > 2000000) {
-            return next(new HttpError("File size too big. Should be less than 2mb"))
+        //image sould be less than 1mb
+        if(club.size > 1000000) {
+            return next(new HttpError("File size too big.Should be less than 1mb"))
         }
 
-        // Upload directly to cloudinary with optimization
-        const result = await cloudinary.uploader.upload(club.tempFilePath, {
-            resource_type: "image",
-            quality: "auto",
-            fetch_format: "auto",
-            flags: "progressive"
-        })
-
-        if(!result.secure_url){
-            return next(new HttpError("Couldn't upload image to cloudinary",422))
-        }
-
-        // Save election to db with optimized query
-        const newElection = await ElectionModal.create({
-            title,
-            description,
-            club: result.secure_url
-        }, { lean: true })
-
-        res.status(201).json({
-            message: "Election created successfully",
-            election: newElection
-        })
+        //rename the image
+        let fileName=club.name;
+        fileName=fileName.split(".")
+        fileName=fileName[0] +uuid() +"."+fileName[fileName.length-1]
+        //upload file to uploads folder in project
+        await club.mv(path.join(__dirname,'..','uploads',fileName),async (err)=>{
+            if(err){
+                return next(new HttpError(err))
+            }
+            //store image on cloudinary
+            const result =await cloudinary.uploader.upload(path.join(__dirname,"..","uploads",fileName),{resource_type: "image"})
+            if(!result.secure_url){
+                return next(new HttpError("Couldn't upload image to cloudinary",422))
+            }
+            //save election to db
+            const newElection=await ElectionModal.create({title,description,club:result.secure_url})
+            res.json(newElection)
+    })
    } catch (error) {
     return next(new HttpError(error))
    }
@@ -143,40 +140,32 @@ const updateElection = async (req,res,next)=>{
         if(!title || !description){
             return next(new HttpError("Fill in all fields.",422))
         }
-        let updateData = { title, description };
-
-        if(req.files && req.files.club) {
+        if(req.files.club){
             const {club} = req.files;
-            // Increase size limit to 2mb and optimize image upload
-            if(club.size > 2000000){
-                return next(new HttpError("Image size too big. Should be less than 2mb", 422))
+            //image size should be less than 1mb
+            if(club.size > 1000000){
+                return next(new HttpError("Image size too big. Should be less than 1mb",422))
             }
 
-            // Upload directly to cloudinary with optimization
-            const result = await cloudinary.uploader.upload(club.tempFilePath, {
-                resource_type: "image",
-                quality: "auto",
-                fetch_format: "auto",
-                flags: "progressive"
-            })
-
+            //rename the image
+        let fileName=club.name;
+        fileName=fileName.split(".")
+        fileName=fileName[0] +uuid() +"."+fileName[fileName.length-1]
+        club.mv(path.join(__dirname,'..','uploads',fileName),async (err) =>{
+            if(err) {
+                return next(new HttpError(err))
+            }
+            //store image on cloudinary
+            const result = await cloudinary.uploader.upload(path.join(__dirname,'..','uploads',fileName),{resource_type: "image"})
+            //check if cloudinary storage was successful
             if(!result.secure_url){
-                return next(new HttpError("Image upload to cloudinary was not successful", 422))
+                return next(new HttpError("Image upload to cloudinary was not successful",422))
             }
 
-            updateData.club = result.secure_url;
+            await ElectionModal.findByIdAndUpdate(id, {title,description,club:result.secure_url})
+            res.json("Election updated successfully",200)
+        })
         }
-
-        const updatedElection = await ElectionModal.findByIdAndUpdate(
-            id,
-            updateData,
-            { new: true, lean: true }
-        );
-
-        res.status(200).json({
-            message: "Election updated successfully",
-            election: updatedElection
-        });
 
     } catch (error) {
         return next(new HttpError(error))
@@ -206,4 +195,3 @@ const removeElection = async (req,res,next)=>{
 
 module.exports={addElection,getElections,getElection,updateElection,removeElection,
 getCandidatesOfElection,getElectionVoters}
-

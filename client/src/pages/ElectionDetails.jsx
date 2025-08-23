@@ -92,33 +92,35 @@ const ElectionDetails = () => {
 
           <menu className="electionDetails__candidates">
             {
-              candidates.map(candidate => <ElectionCandidate key={candidate._id}{...candidate} />)
+              candidates.map(candidate => <ElectionCandidate key={candidate._id}{...candidate} isAdmin={isAdmin} />)
             }
             {isAdmin && <button className="add__candidate-btn" onClick={openModal}><IoAddOutline /></button>}
           </menu>
 
-          <menu className="voters">
-            <h2>Voters</h2>
-            <table className="voters__table">
-              <thead>
-                <tr>
-                  <th>Full Name</th>
-                  <th>Email Address</th>
-                  <th>Time</th>
-                </tr>
-              </thead>
-              <tbody>
-                {
-                  voters.map(voter =><tr key={voter._id}>
-                    <td><h5>{voter.fullName}</h5></td>
-                    <td>{voter.email}</td>
-                    <td>{voter.createdAt}</td>
-                  </tr> )
-                }
-              </tbody>
+          {isAdmin && (
+            <menu className="voters">
+              <h2>Voters</h2>
+              <table className="voters__table">
+                <thead>
+                  <tr>
+                    <th>Full Name</th>
+                    <th>Email Address</th>
+                    <th>Time</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {
+                    voters.map(voter =><tr key={voter._id}>
+                      <td><h5>{voter.fullName}</h5></td>
+                      <td>{voter.email}</td>
+                      <td>{voter.createdAt}</td>
+                    </tr> )
+                  }
+                </tbody>
 
-            </table>
-          </menu>
+              </table>
+            </menu>
+          )}
 
           {isAdmin && <button className='btn danger full' onClick={deleteElection}>Delete Election</button>}
         </div>

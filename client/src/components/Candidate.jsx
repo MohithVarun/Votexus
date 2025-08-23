@@ -25,4 +25,3 @@ const Candidate = ({image,_id:id,fullName,motto}) => {
 }
 
 export default Candidate
-

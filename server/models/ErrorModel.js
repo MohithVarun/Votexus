@@ -1,4 +1,7 @@
 
+
+
+
 class HttpError extends Error {
     constructor(message,errorCode){
         super(message);
@@ -7,4 +10,3 @@ class HttpError extends Error {
 }
 
 module.exports=HttpError;
-

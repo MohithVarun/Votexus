@@ -25,10 +25,16 @@ const AddElectionModal = () => {
     e.preventDefault()
     try {
       const electionData=new FormData()
-      electionData.set('title',title)
-      electionData.set('description',description)
-      electionData.set('club',club)
-      const response = await axios.post(`${process.env.REACT_APP_API_URL}/elections`,electionData,{withCredentials:true,headers:{Authorization: `Bearer ${token}`}})
+      electionData.append('title',title)
+      electionData.append('description',description)
+      electionData.append('club',club)
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}/elections`,electionData,{
+        withCredentials:true,
+        headers:{
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        }
+      })
       closeModal()
       navigate(0)
     } catch (error) {

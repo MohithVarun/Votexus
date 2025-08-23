@@ -19,35 +19,22 @@ const ResultElection = ({_id: id,club,title}) => {
     const getCandidates=async () =>{
         setIsLoading(true)
         try{
-            console.log(`Fetching candidates for election ${id} with token:`, token);
-            console.log('API URL:', process.env.REACT_APP_API_URL);
             const response=await axios.get(`${process.env.REACT_APP_API_URL}/elections/${id}/candidates`,{withCredentials:true,headers:{Authorization: `Bearer ${token}`}})
-            console.log('Candidates API response:', response);
             const candidates = await response.data;
-            console.log('Candidates data:', candidates);
             setElectionCandidates(candidates)
             //calculate the total votes in each election
-            let totalVotesCount = 0;
             for(let i=0;i<candidates.length;i++){
-                totalVotesCount += candidates[i].voteCount;
+                setTotalVotes(prevState => prevState += candidates[i].voteCount)
             }
-            console.log('Total votes calculated:', totalVotesCount);
-            setTotalVotes(totalVotesCount);
         }catch(error){
-            console.error('Error fetching candidates:', error);
-            if (error.response) {
-                console.error('Error response data:', error.response.data);
-                console.error('Error response status:', error.response.status);
-            }
+            console.log(error)
         }
         setIsLoading(false)
     }
 
     useEffect(()=> {
-        if (token && id) {
-            getCandidates();
-        }
-    },[token, id])
+        getCandidates()
+    },[])
     
   return (
     <>
@@ -71,4 +58,3 @@ const ResultElection = ({_id: id,club,title}) => {
 }
 
 export default ResultElection
-

@@ -70,4 +70,3 @@ const Elections = () => {
 }
 
 export default Elections
-

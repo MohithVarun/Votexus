@@ -21,27 +21,17 @@ const Results = () => {
 
   const getElections = async (e) =>{
     try {
-      console.log('Fetching elections with token:', token);
-      console.log('API URL:', process.env.REACT_APP_API_URL);
       const response = await axios.get(`${process.env.REACT_APP_API_URL}/elections`,{withCredentials: true,headers: {Authorization: `Bearer ${token}`}})
-      console.log('Elections API response:', response);
-      const elections = await response.data;
-      console.log('Elections data:', elections);
+      const elections=await response.data;
       setElections(elections)
     } catch (error) {
-      console.error('Error fetching elections:', error);
-      if (error.response) {
-        console.error('Error response data:', error.response.data);
-        console.error('Error response status:', error.response.status);
-      }
+      console.log(error)
     }
   }
 
   useEffect(()=>{
-    if (token) {
-      getElections();
-    }
-  },[token])
+    getElections()
+  },[])
 
   return (
     <section className="results">

@@ -18,66 +18,24 @@ const Login = () => {
     })
   }
 
-  // Function to check server availability
-  const checkServerAvailability = async () => {
-    try {
-      await axios.get(`${process.env.REACT_APP_API_URL}/health`);
-      return true;
-    } catch (error) {
-      return false;
-    }
-  };
-
-  const loginVoter = async (e) => {
-    e.preventDefault();
-    setError(""); // Clear previous errors
+  const loginVoter=async (e) =>{
+    e.preventDefault()
     
-    if (!userData.email || !userData.password) {
-      setError("Please fill in all fields");
-      return;
+    // Client-side validation for email domain
+    if(!userData.email.toLowerCase().endsWith('@srmap.edu.in')){
+      setError('Only @srmap.edu.in email addresses are allowed.')
+      return
     }
-
-    if (!process.env.REACT_APP_API_URL) {
-      setError("Configuration error. Please contact administrator.");
-      return;
-    }
-
-    // Check server availability first
-    const isServerAvailable = await checkServerAvailability();
-    if (!isServerAvailable) {
-      setError("Server is not responding. Please try again later.");
-      return;
-    }
-
-    const requestUrl = `${process.env.REACT_APP_API_URL}/voters/login`;
     
     try {
-      const config = {
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        timeout: 5000 // 5 second timeout
-      };
-      
-      const response = await axios.post(requestUrl, userData, config);
-      const newVoter = response.data;
-      
-      localStorage.setItem("currentUser", JSON.stringify(newVoter));
-      dispatch(voteActions.changeCurrentVoter(newVoter));
-      navigate("/results");
+      const response=await axios.post(`${process.env.REACT_APP_API_URL}/voters/login`,userData)
+      const newVoter = await response.data;
+      //save new voter in local storage and update in redux store
+      localStorage.setItem("currentUser",JSON.stringify(newVoter))
+      dispatch(voteActions.changeCurrentVoter(newVoter))
+      navigate("/results")
     } catch (err) {
-      if (err.code === 'ECONNABORTED') {
-        setError('Request timed out. Please try again.');
-      } else if (err.response) {
-        // Server responded with error
-        const errorMessage = err.response.data?.message || err.response.data;
-        setError(typeof errorMessage === 'string' ? errorMessage : 'Invalid credentials');
-      } else if (err.request) {
-        // No response received
-        setError('Network error. Please check your connection and try again.');
-      } else {
-        setError('An unexpected error occurred. Please try again.');
-      }
+      setError(err.response.data.message)
     }
   }
 
@@ -100,4 +58,3 @@ const Login = () => {
 }
 
 export default Login
-

@@ -15,59 +15,27 @@ const Register = () => {
   }
 
 
-  const registerVoter = async (e) => {
+  const registerVoter = async (e) =>{
     e.preventDefault();
-    console.log('Submitting registration with data:', userData);
-    console.log('API URL from env:', process.env.REACT_APP_API_URL);
     
-    // Check if the API URL is properly loaded from .env
-    if (!process.env.REACT_APP_API_URL) {
-      console.error('API URL is not defined in environment variables');
-      setError('Configuration error. Please contact administrator.');
-      return;
+    // Client-side validation for email domain
+    if(!userData.email.toLowerCase().endsWith('@srmap.edu.in')){
+      setError('Only @srmap.edu.in email addresses are allowed.')
+      return
     }
     
-    const requestUrl = `${process.env.REACT_APP_API_URL}/voters/register`;
-    console.log('Full request URL:', requestUrl);
+    // Client-side validation for password strength
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).*$/
+    if(!passwordRegex.test(userData.password)){
+      setError('Password must contain at least one uppercase letter, one lowercase letter, and one special character.')
+      return
+    }
     
     try {
-      // Add request headers for debugging
-      const config = {
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      };
-      console.log('Sending request with config:', config);
-      
-      const response = await axios.post(requestUrl, userData, config);
-      console.log('Registration response:', response);
-      console.log('Registration successful:', response.data);
-      alert('Registration successful! Please login.');
-      navigate('/');
+      await axios.post(`${process.env.REACT_APP_API_URL}/voters/register`,userData)
+      navigate('/')
     } catch (err) {
-      console.error('Registration error details:', {
-        message: err.message,
-        response: err.response,
-        request: err.request
-      });
-      
-      if (err.response) {
-        // The server responded with a status code outside the 2xx range
-        console.error('Server error response:', {
-          data: err.response.data,
-          status: err.response.status,
-          headers: err.response.headers
-        });
-        setError(err.response.data?.message || `Server error: ${err.response.status}`);
-      } else if (err.request) {
-        // The request was made but no response was received
-        console.error('No response received from server');
-        setError('No response from server. Please check your network connection.');
-      } else {
-        // Something happened in setting up the request
-        console.error('Request setup error:', err.message);
-        setError('Error setting up request: ' + err.message);
-      }
+      setError(err.response.data.message)
     }
   }
 

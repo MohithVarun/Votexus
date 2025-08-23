@@ -83,4 +83,3 @@ const UpdateElectionModal = () => {
 }
 
 export default UpdateElectionModal
-

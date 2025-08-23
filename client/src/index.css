@@ -1,8 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Outfit:wght@100..900&display=swap');
 
 
-
-
 :root{
     --color-primary:rgb(73,70,35);
     --color-primary-variant:rgb(11,175,207);
@@ -71,7 +69,7 @@ h1,h2,h3,h4,h5,h6{
     color:var(--color-gray-900);
     text-transform:uppercase;
     font-weight:800;
-}
+}  
 
 h1{
     font-size:1.6rem;

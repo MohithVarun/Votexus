@@ -1,9 +1,13 @@
-const cloudinary = require('../utils/cloudinary')
+const {v4:uuid}=require("uuid")
+const cloudinary=require('../utils/cloudinary')
+const path=require("path")
+const mongoose=require("mongoose")
 
-const HttpError = require('../models/ErrorModel')
+const HttpError=require('../models/ErrorModel')
 const ElectionModal = require('../models/electionModel')
 const CandidateModel = require('../models/candidateModel')
 const VoterModel = require('../models/voterModel')
+const electionModel = require("../models/electionModel")
 
 //===========ADD CANDIDATE
 //post :api/candidates
@@ -23,43 +27,40 @@ const addCandidate = async (req,res,next)=>{
         }
 
         const {image}=req.files;
-        // Increase size limit to 2mb and optimize image upload
-        if(image.size > 2000000){
-            return next(new HttpError("Image size should be less than 2mb", 422))
+        //check file size
+        if(image.size >1000000){
+            return next(new HttpError("Image size should be less than 1mb",422))
         }
+        //rename the image
+        let fileName=image.name;
+        fileName=fileName.split(".")
+        fileName=fileName[0] +uuid() +"."+fileName[fileName.length-1]
+        //upload file to uploads folder in project
+        image.mv(path.join(__dirname,'..','uploads',fileName),async (err) => {
+            if(err){
+                return next(new HttpError(error))
+            }
+            //store image on cloudinary
+            const result = await cloudinary.uploader.upload(path.join(__dirname,'..','uploads',fileName),{resource_type: "image"})
+            if(!result.secure_url){
+                return next(new HttpError("Couldn't upload image to cloudinary"))
+            }
+            //add candidate to db
+            let newCandidate= await CandidateModel.create({fullName,motto,image:result.secure_url,election: currentElection})
 
-        // Upload directly to cloudinary with optimization
-        const result = await cloudinary.uploader.upload(image.tempFilePath, {
-            resource_type: "image",
-            quality: "auto",
-            fetch_format: "auto",
-            flags: "progressive"
+            //get election and push candidate to election
+            let election = await ElectionModal.findById(currentElection)
+
+            const sess =await mongoose.startSession()
+            sess.startTransaction()
+            await newCandidate.save({session: sess})
+            election.candidates.push(newCandidate)
+            await election.save({session: sess})
+            await sess.commitTransaction()
+
+            res.status(201).json("Candidate added successfully")
         })
-
-        if(!result.secure_url){
-            return next(new HttpError("Couldn't upload image to cloudinary"))
-        }
-
-        // Create candidate first
-        const newCandidate = await CandidateModel.create({
-            fullName,
-            motto,
-            image: result.secure_url,
-            election: currentElection
-        })
-
-        // Then update election with the new candidate's ID
-        await ElectionModal.findByIdAndUpdate(
-            currentElection,
-            { $push: { candidates: newCandidate._id } },
-            { new: true, lean: true }
-        )
-
-        res.status(201).json({
-            message: "Candidate added successfully",
-            candidate: newCandidate
-        })
-     } catch (error) {
+    } catch (error) {
         return next(new HttpError(error))
     }
 }
@@ -120,19 +121,20 @@ const voteCandidate = async (req,res,next)=>{
         const newVoteCount = candidate.voteCount +1;
         //update candidate's votes
         await CandidateModel.findByIdAndUpdate(candidateId, {voteCount: newVoteCount},{new: true})
-        // Update voter and election relationships
-        await VoterModel.findByIdAndUpdate(
-            req.user.id,
-            { $push: { votedElections: selectedElection } }
-        )
-        
-        await electionModel.findByIdAndUpdate(
-            selectedElection,
-            { $push: { voters: req.user.id } }
-        )
-        // Get updated voter data to return voted elections
-        const updatedVoter = await VoterModel.findById(req.user.id)
-        res.status(200).json(updatedVoter.votedElections)
+        //start session for relationship between voters and election
+        const sess = await mongoose.startSession()
+        sess.startTransaction();
+        //get the current voter
+        let voter = await VoterModel.findById(req.user.id)
+        await voter.save({session: sess})
+        //get selected election
+        let election = await electionModel.findById(selectedElection);
+        election.voters.push(voter);
+        voter.votedElections.push(election);
+        await election.save({session: sess})
+        await voter.save({session: sess})
+        await sess.commitTransaction();
+        res.status(200).json(voter.votedElections)
     } catch (error) {
         return next(new HttpError(error))
     }
@@ -140,4 +142,3 @@ const voteCandidate = async (req,res,next)=>{
 
 
 module.exports={addCandidate,getCandidate,removeCandidate,voteCandidate}
-
