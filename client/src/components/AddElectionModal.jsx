@@ -3,16 +3,18 @@ import { IoMdClose } from 'react-icons/io'
 import { useDispatch, useSelector } from 'react-redux'
 import { UiActions } from '../store/ui-slice'
 import axios from 'axios'
-import { useNavigate } from 'react-router-dom'
+import AlertModal from './AlertModal'
 
 
 const AddElectionModal = () => {
   const [title,setTitle]=useState("")
   const [description,setDescription]=useState("")
   const [club,setClub]=useState("")
+  const [isLoading,setIsLoading]=useState(false)
 
   const dispatch=useDispatch()
-  const navigate=useNavigate()
+  const alertModalShowing = useSelector(state => state.ui.alertModalShowing)
+  const alertModalData = useSelector(state => state.ui.alertModalData)
 
   //close add election modal
   const closeModal = () =>{
@@ -24,6 +26,7 @@ const AddElectionModal = () => {
   const createElection = async (e)=>{
     e.preventDefault()
     try {
+      setIsLoading(true)
       const electionData=new FormData()
       electionData.append('title',title)
       electionData.append('description',description)
@@ -35,10 +38,21 @@ const AddElectionModal = () => {
           'Content-Type': 'multipart/form-data'
         }
       })
+      // Reset form
+      setTitle("")
+      setDescription("")
+      setClub("")
+      setIsLoading(false)
       closeModal()
-      navigate(0)
+      // Reload page to refresh elections list
+      window.location.reload()
     } catch (error) {
       console.log(error)
+      setIsLoading(false)
+      dispatch(UiActions.openAlertModal({
+        type: 'error',
+        message: error.response?.data?.message || "Failed to create election. Please try again."
+      }))
     }
   }
 
@@ -62,9 +76,21 @@ const AddElectionModal = () => {
               <h6>Election Club:</h6>
               <input type="file" name='club' onChange={e => setClub(e.target.files[0])} accept="png,jpg,jpeg,webp,avif"/>
             </div>
-            <button type="submit"  className="btn primary">Add Election</button>
+            <button type="submit"  className="btn primary" disabled={isLoading}>
+              {isLoading ? (
+                <>
+                  <span className="spinner"></span>
+                  Adding...
+                </>
+              ) : (
+                'Add Election'
+              )}
+            </button>
           </form>
         </div>
+        {alertModalShowing && alertModalData && (
+          <AlertModal type={alertModalData.type} message={alertModalData.message} />
+        )}
     </section>
   )
 }

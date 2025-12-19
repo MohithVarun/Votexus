@@ -71,16 +71,19 @@ const Candidates = () => {
           <p>These are the candidates for the selected election.please vote once and wisely,
             because you won't be allowed to vote in this election again.
           </p>
-        </header> : <header className="candidates__header">
-          <h1>Inactive Election</h1>
-          <p>There are no candidates found for this election.Please check back later.
-          </p>
-        </header>}
-        <div className="container candidates__container">
-          {
-            candidates.map(candidate => <Candidate key={candidate._id} {...candidate} />)
-          }
-        </div>
+        </header> : (
+          <div className="empty-state">
+            <div className="empty-state__icon">👥</div>
+            <h2>No Candidates Yet</h2>
+            <p>This election is still being set up. Candidates will be added soon!</p>
+            <p className="empty-state__subtext">Check back later to cast your vote! 🗳️</p>
+          </div>
+        )}
+        {candidates.length > 0 && (
+          <div className="container candidates__container">
+            {candidates.map(candidate => <Candidate key={candidate._id} {...candidate} />)}
+          </div>
+        )}
         </>}
       </section>
 

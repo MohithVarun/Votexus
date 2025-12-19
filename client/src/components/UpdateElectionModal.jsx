@@ -3,7 +3,7 @@ import { IoMdClose } from 'react-icons/io'
 import { useDispatch, useSelector } from 'react-redux'
 import { UiActions } from '../store/ui-slice'
 import axios from 'axios'
-import { Navigate, useNavigate } from 'react-router-dom'
+import AlertModal from './AlertModal'
 
 
 
@@ -11,12 +11,13 @@ const UpdateElectionModal = () => {
   const [title,setTitle]=useState("")
   const [description,setDescription]=useState("")
   const [club,setClub]=useState("")
+  const [isLoading,setIsLoading]=useState(false)
 
   const dispatch=useDispatch()
   const idOfElectionToUpdate=useSelector(state=>state?.vote?.idOfElectionToUpdate)
   const token=useSelector(state=>state?.vote?.currentVoter?.token)
-
-  const navigate=useNavigate()
+  const alertModalShowing = useSelector(state => state.ui.alertModalShowing)
+  const alertModalData = useSelector(state => state.ui.alertModalData)
 
   //close update election modal
   const closeModal = () =>{
@@ -42,15 +43,36 @@ const UpdateElectionModal = () => {
   const updateElection= async (e) =>{
     e.preventDefault()
     try {
+      setIsLoading(true)
       const electionData = new FormData();
-      electionData.set('title',title)
-      electionData.set('description',description)
-      electionData.set('club',club)
-      const response=await axios.patch(`${process.env.REACT_APP_API_URL}/elections/${idOfElectionToUpdate}`,electionData,{withCredentials:true,headers:{Authorization: `Bearer ${token}`}})
+      electionData.append('title',title)
+      electionData.append('description',description)
+      // Only append club if a new file is selected
+      if(club){
+        electionData.append('club',club)
+      }
+      await axios.patch(`${process.env.REACT_APP_API_URL}/elections/${idOfElectionToUpdate}`,electionData,{
+        withCredentials:true,
+        headers:{
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        }
+      })
+      // Reset form
+      setTitle("")
+      setDescription("")
+      setClub("")
+      setIsLoading(false)
       closeModal()
-      navigate(0)
+      // Reload page to refresh elections list
+      window.location.reload()
     } catch (error) {
-      
+      console.log(error)
+      setIsLoading(false)
+      dispatch(UiActions.openAlertModal({
+        type: 'error',
+        message: error.response?.data?.message || "Failed to update election. Please try again."
+      }))
     }
   }
 
@@ -75,9 +97,21 @@ const UpdateElectionModal = () => {
               <h6>Election Club:</h6>
               <input type="file" name='club' onChange={e => setClub(e.target.files[0])} accept="png,jpg,jpeg,webp,avif"/>
             </div>
-            <button type="submit"  className="btn primary">Update Election</button>
+            <button type="submit" className="btn primary" disabled={isLoading}>
+              {isLoading ? (
+                <>
+                  <span className="spinner"></span>
+                  Updating...
+                </>
+              ) : (
+                'Update Election'
+              )}
+            </button>
           </form>
         </div>
+        {alertModalShowing && alertModalData && (
+          <AlertModal type={alertModalData.type} message={alertModalData.message} />
+        )}
     </section>
   )
 }

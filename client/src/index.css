@@ -132,9 +132,14 @@ button{
     width:100%;
 }
 
-.btn:hover{
+.btn:hover:not(:disabled){
     background:var(--color-gray-900);
     color:var(--color-gray-0);
+}
+
+.btn.primary:hover:not(:disabled){
+    background:var(--color-primary);
+    opacity: 0.9;
 }
 
 
@@ -719,6 +724,149 @@ nav{
 .loader__container{
     width: 7rem;
     height: 7rem;
+}
+
+/* ==========SPINNER (Button Loading Indicator) ===========*/
+.spinner {
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: white;
+    animation: spin 0.6s linear infinite;
+    margin-right: 0.5rem;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+/*=============CONFIRMATION MODAL =================*/
+.confirmation-modal {
+    width: 30rem;
+}
+
+.confirmation-modal__body {
+    padding: 2rem;
+    text-align: center;
+}
+
+.confirmation-modal__body p {
+    color: var(--color-gray-700);
+    margin-bottom: 2rem;
+    line-height: 1.6;
+}
+
+.confirmation-modal__actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    align-items: center;
+}
+
+.confirmation-modal__actions .btn {
+    min-width: 8rem;
+}
+
+/*=============ALERT MODAL =================*/
+.alert-modal {
+    width: 32rem;
+}
+
+.alert-modal + .modal,
+.modal:has(.alert-modal) {
+    z-index: 3;
+}
+
+.alert-modal__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.alert-modal__title-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+}
+
+.alert-modal__icon {
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+}
+
+.alert-modal__header--success {
+    background: var(--color-success);
+}
+
+.alert-modal__header--error {
+    background: var(--color-danger);
+}
+
+.alert-modal__body {
+    padding: 2rem;
+    text-align: center;
+}
+
+.alert-modal__body p {
+    color: var(--color-gray-700);
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+    font-size: 0.95rem;
+}
+
+/*=============EMPTY STATE =================*/
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    margin: 3rem auto;
+    max-width: 600px;
+    background: var(--color-gray-0);
+    border-radius: var(--radius-3);
+    box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.1);
+}
+
+.empty-state__icon {
+    font-size: 4rem;
+    margin-bottom: 1.5rem;
+    animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+.empty-state h2 {
+    color: var(--color-primary);
+    margin-bottom: 1rem;
+    font-size: 1.8rem;
+}
+
+.empty-state p {
+    color: var(--color-gray-600);
+    font-size: 1rem;
+    line-height: 1.8;
+    max-width: 500px;
+    margin: 0 auto 1rem;
+}
+
+.empty-state__subtext {
+    color: var(--color-gray-500);
+    font-size: 0.9rem;
+    font-style: italic;
+    margin-top: 0.5rem;
 }
 
 

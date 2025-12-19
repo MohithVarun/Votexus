@@ -1,7 +1,7 @@
 import { createSlice } from "@reduxjs/toolkit";
 
 const initialState={addCandidateModalShowing: false,voteCandidateModalShowing: false,electionModalShowing:
- false,updateElectionModalShowing:false}
+ false,updateElectionModalShowing:false,confirmationModalShowing: false,confirmationModalData: null,alertModalShowing: false,alertModalData: null}
 
 const uiSlice = createSlice({
     name:"ui",
@@ -30,6 +30,22 @@ const uiSlice = createSlice({
         },
         closeUpdateElectionModal(state){
             state.updateElectionModalShowing =false
+        },
+        openConfirmationModal(state, action){
+            state.confirmationModalShowing = true
+            state.confirmationModalData = action.payload
+        },
+        closeConfirmationModal(state){
+            state.confirmationModalShowing = false
+            state.confirmationModalData = null
+        },
+        openAlertModal(state, action){
+            state.alertModalShowing = true
+            state.alertModalData = action.payload
+        },
+        closeAlertModal(state){
+            state.alertModalShowing = false
+            state.alertModalData = null
         },
     }
 })

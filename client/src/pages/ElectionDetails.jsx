@@ -5,6 +5,8 @@ import { IoAddOutline } from 'react-icons/io5'
 import { useDispatch, useSelector } from 'react-redux'
 import { UiActions } from '../store/ui-slice'
 import AddCandidateModal from '../components/AddCandidateModal'
+import ConfirmationModal from '../components/ConfirmationModal'
+import AlertModal from '../components/AlertModal'
 import axios from 'axios'
 import { voteActions } from '../store/vote-slice'
 
@@ -26,6 +28,10 @@ const ElectionDetails = () => {
   const {id} =useParams()
   const dispatch=useDispatch()
   const addCandidateModalShowing = useSelector(state => state.ui.addCandidateModalShowing)
+  const confirmationModalShowing = useSelector(state => state.ui.confirmationModalShowing)
+  const confirmationModalData = useSelector(state => state.ui.confirmationModalData)
+  const alertModalShowing = useSelector(state => state.ui.alertModalShowing)
+  const alertModalData = useSelector(state => state.ui.alertModalData)
   const token = useSelector(state => state.vote.currentVoter?.token)
   const isAdmin = useSelector(state => state.vote.currentVoter?.isAdmin)
   
@@ -58,12 +64,24 @@ const ElectionDetails = () => {
     }
   }
 
+  const handleDeleteElectionClick = () => {
+    dispatch(UiActions.openConfirmationModal({
+      title: 'Delete Election',
+      message: `Are you sure you want to delete "${election.title}"? This action cannot be undone and will also delete all associated candidates.`,
+      onConfirm: deleteElection
+    }))
+  }
+
   const deleteElection= async() =>{
     try {
-      const response = await axios.delete(`${process.env.REACT_APP_API_URL}/elections/${id}`,{withCredentials:true,headers:{Authorization: `Bearer ${token}`}})
+      await axios.delete(`${process.env.REACT_APP_API_URL}/elections/${id}`,{withCredentials:true,headers:{Authorization: `Bearer ${token}`}})
       navigate('/elections')
     } catch (error) {
       console.log(error)
+      dispatch(UiActions.openAlertModal({
+        type: 'error',
+        message: error.response?.data?.message || "Failed to delete election. Please try again."
+      }))
     }
   }
 
@@ -91,10 +109,19 @@ const ElectionDetails = () => {
           </div>
 
           <menu className="electionDetails__candidates">
-            {
-              candidates.map(candidate => <ElectionCandidate key={candidate._id}{...candidate} isAdmin={isAdmin} />)
-            }
-            {isAdmin && <button className="add__candidate-btn" onClick={openModal}><IoAddOutline /></button>}
+            {candidates.length > 0 ? (
+              <>
+                {candidates.map(candidate => <ElectionCandidate key={candidate._id}{...candidate} isAdmin={isAdmin} />)}
+                {isAdmin && <button className="add__candidate-btn" onClick={openModal}><IoAddOutline /></button>}
+              </>
+            ) : (
+              <div className="empty-state">
+                <div className="empty-state__icon">👤</div>
+                <h3>No Candidates Added</h3>
+                <p>This election doesn't have any candidates yet. Add your first candidate to get started!</p>
+                {isAdmin && <button className="btn primary" onClick={openModal} style={{marginTop: '1rem'}}>Add First Candidate</button>}
+              </div>
+            )}
           </menu>
 
           {isAdmin && (
@@ -122,11 +149,21 @@ const ElectionDetails = () => {
             </menu>
           )}
 
-          {isAdmin && <button className='btn danger full' onClick={deleteElection}>Delete Election</button>}
+          {isAdmin && <button className='btn danger full' onClick={handleDeleteElectionClick}>Delete Election</button>}
         </div>
       </section>
 
       {addCandidateModalShowing && <AddCandidateModal /> }
+      {confirmationModalShowing && confirmationModalData && (
+        <ConfirmationModal 
+          title={confirmationModalData.title}
+          message={confirmationModalData.message}
+          onConfirm={confirmationModalData.onConfirm}
+        />
+      )}
+      {alertModalShowing && alertModalData && (
+        <AlertModal type={alertModalData.type} message={alertModalData.message} />
+      )}
     </>
   )
 }

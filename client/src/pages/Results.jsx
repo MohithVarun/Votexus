@@ -36,9 +36,16 @@ const Results = () => {
   return (
     <section className="results">
       <div className="container results__container">
-        {
+        {elections.length > 0 ? (
           elections.map(election => <ResultElection key={election._id} {...election} />)
-        }
+        ) : (
+          <div className="empty-state">
+            <div className="empty-state__icon">📊</div>
+            <h2>No Results Available</h2>
+            <p>There are no election results to display at this time. Results will appear here once elections are completed!</p>
+            <p className="empty-state__subtext">Come back soon to see the latest voting outcomes! 🎯</p>
+          </div>
+        )}
       </div>
     </section>
   )

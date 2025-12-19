@@ -3,16 +3,18 @@ import { IoMdClose } from 'react-icons/io'
 import { useDispatch, useSelector } from 'react-redux'
 import { UiActions } from '../store/ui-slice'
 import axios from 'axios'
-import { useNavigate } from 'react-router-dom'
+import AlertModal from './AlertModal'
 
 
 const AddCandidateModal = () => {
     const [fullName,setFullName]=useState("")
     const [motto,setMotto]=useState("")
     const [image,setImage]=useState("")
+    const [isLoading,setIsLoading]=useState(false)
 
     const dispatch=useDispatch()
-    const navigate=useNavigate()
+    const alertModalShowing = useSelector(state => state.ui.alertModalShowing)
+    const alertModalData = useSelector(state => state.ui.alertModalData)
 
 
     //close add candidate modal
@@ -25,15 +27,34 @@ const AddCandidateModal = () => {
     const addCandidate = async (e) =>{
         try {
             e.preventDefault()
+            setIsLoading(true)
             const candidateInfo = new FormData()
-            candidateInfo.set('fullName',fullName)
-            candidateInfo.set('motto',motto)
-            candidateInfo.set('image',image)
-            candidateInfo.set('currentElection',electionId)
-            await axios.post(`${process.env.REACT_APP_API_URL}/candidates`,candidateInfo,{withCredentials:true,headers:{Authorization: `Bearer ${token}`}})
-            navigate(0)
+            candidateInfo.append('fullName',fullName)
+            candidateInfo.append('motto',motto)
+            candidateInfo.append('image',image)
+            candidateInfo.append('currentElection',electionId)
+            await axios.post(`${process.env.REACT_APP_API_URL}/candidates`,candidateInfo,{
+                withCredentials:true,
+                headers:{
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'multipart/form-data'
+                }
+            })
+            // Reset form
+            setFullName("")
+            setMotto("")
+            setImage("")
+            setIsLoading(false)
+            closeModal()
+            // Reload page to refresh candidates list
+            window.location.reload()
         } catch (error) {
             console.log(error)
+            setIsLoading(false)
+            dispatch(UiActions.openAlertModal({
+                type: 'error',
+                message: error.response?.data?.message || "Failed to add candidate. Please try again."
+            }))
         }
     }
 
@@ -58,9 +79,21 @@ const AddCandidateModal = () => {
                     <h6>Candidate Image:</h6>
                     <input type="file" name='image' onChange={(e => setImage(e.target.files[0]))} accept="png,jpg,jpeg,webp,avif"/>
                 </div>
-                <button type="submit" className="btn primary">Add Candidate</button>
+                <button type="submit" className="btn primary" disabled={isLoading}>
+                    {isLoading ? (
+                        <>
+                            <span className="spinner"></span>
+                            Adding...
+                        </>
+                    ) : (
+                        'Add Candidate'
+                    )}
+                </button>
             </form>
         </div>
+        {alertModalShowing && alertModalData && (
+            <AlertModal type={alertModalData.type} message={alertModalData.message} />
+        )}
     </section>
   )
 }
